@@ -297,56 +297,61 @@ def book_room():
     q = int(input("Enter Type of room (1-4)"))
 
     # Define room types and corresponding prices
-    rtypes = ['UltraDelux', 'Delux', 'Standard', 'Basis']
+    rtypes = ['UltraDelux', 'Delux', 'Standard', 'Basic']
     prices = [100000, 70000, 50000, 20000]
-    
-    if q==1:
-        x.execute("SELECT rno FROM room_details WHERE rtype = 'Ultra delux'")
-        c.commit()
-    elif q==2:
-        x.execute("SELECT rno FROM room_details WHERE rtype = 'Delux'")
-        c.commit()
-    elif q==3:
-        x.execute("SELECT rno FROM room_details WHERE rtype = 'Standard'")
-        c.commit()
-    elif q==4:
-        x.execute("SELECT rno FROM room_details WHERE rtype = 'Basic'")
-        c.commit()
-    else:
-        print("ROOM NOT EXIST")
-       
-    # Check if the user selected a valid room type
+
+    available_rooms = []
+
     if 0 < q <= len(rtypes):
-        y = rtypes[q - 1]
+        rtype = rtypes[q - 1]
         print(f"Room Price = {prices[q - 1]}")
+
+        # Available room numbers for the selected room type
+        x.execute("SELECT rno FROM room_details WHERE rtype = %s AND status = 'Available'", (rtype,))
+        available_rooms = x.fetchall()
+
+        if available_rooms:
+            print("Available Room Numbers:")
+            for room in available_rooms[:4]:
+                print(room[0])
+        else:
+            print(f"No available {rtype} rooms.")
+            return
     elif q == 0:
         userlog()
     else:
         print("Invalid room type selected.")
-        book_room()
+        return
 
-    DOO = input("Enter DATE OF OCCUPANCY (YYYY-MM-DD):")
-    checkout = input("Enter CHECK OUT DATE (YYYY-MM-DD):")
-    advanced = float(input("Enter advanced amount:"))
+    # The user to select a room number
+    rno = int(input("Enter Room Number to book: "))
 
-    # Check if the room is available
-    # Temperary Comment 
-    '''room_record = room_exist(rno)
+    # Check if the selected room is available
+    if (rno,) in available_rooms:
+        DOO = input("Enter DATE OF OCCUPANCY (YYYY-MM-DD): ")
+        checkout = input("Enter CHECK OUT DATE (YYYY-MM-DD): ")
+        advanced = float(input("Enter advanced amount: "))
 
-    if room_record and room_record[3] == "available":
-        # Insert booking record
-        sql = "INSERT INTO booking (rno, C_id, rtype, C_name, DOO, checkout, advanced) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        values = (rno, C_id, y, C_name, DOO, checkout, advanced)
-        x.execute(sql, values)
+        # Check if the room is available
+        room_record = room_exist(rno)
 
-        # Update room status to occupied
-        x.execute("UPDATE room_details SET status = 'occupied' WHERE rno = %s", (rno,))
+        if room_record and room_record[3] == "Available":
+            # Insert booking record
+            sql = "INSERT INTO booking (rno, C_id, rtype, C_name, DOO, checkout, advanced) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            values = (rno, C_id, rtype, C_name, DOO, checkout, advanced)
+            x.execute(sql, values)
+            # sql = "INSERT INTO booking (rno, C_id, rtype, C_name, DOO, checkout, advanced) VALUES ({}, {}, '{}', '{}', {}, {},{})".format(rno, C_id, rtype, C_name, DOO, checkout, advanced)
+            # x.execute(sql)
 
-        c.commit()
-        print(f"Room {rno} booked for Customer ID {C_id} - {C_name}")
+            # Update room status to occupied
+            x.execute("UPDATE room_details SET status = 'occupied' WHERE rno = %s", (rno,))
+
+            c.commit()
+            print(f"Room {rno} booked for Customer ID {C_id} - {C_name}")
+        else:
+            print("Room is not available for booking.")
     else:
-        print("Room is not available for booking.")'''
-
+        print("Invalid room number selected.")
 
 #====================================VIEW BOOKINGS==============================
 def view_bookings():
@@ -517,49 +522,43 @@ def userlog():
         cust()
     if login==2:
         manager()
-# Temeperary Comment        
+
 def generate_bill():
     c = connect()
     x = c.cursor()
 
-    x.execute("SELECT DOO from booking ")
-    doo=x.fetchone()
-    x.execute("SELECT checkout from booking ")
-    cout=x.fetchone()
-    d=int(doo[-1,-3])
-    type(d)
-    ''' Comment
-# Calculate the total cost
-    total_cost =room_rent * num_nights
+    # Fetch booking data
+    x.execute("SELECT DOO, checkout, C_id, C_name, rno, advanced FROM booking")
+    booking_data = x.fetchone()
 
-# Calculate the balance amount
-    balance = total_cost - advanced
+    if booking_data:
+        DOO, checkout, C_id, C_name, rno, advanced = booking_data
+        num_nights = int(checkout[-2:]) - int(DOO[-2:])
 
-    print("-------- Bill --------")
-    print("Customer ID:", C_id)
-    print("Room Number:", rno)
-    print("Date of Occupancy:", DOO)
-    print("Check Out Date:", checkout)
-    print("Room Rent per Night: $", room_rent)
-    print("Number of Nights Stayed:", num_nights)
-    print("Total Room Rent: $", total_cost)
-    print("Advanced Payment: $", advanced)
-    print("Balance Amount: $", balance)
+        # Fetch room rent for the specified room number
+        x.execute("SELECT rent FROM room_details WHERE rno = {}".format(rno))
+        room_rent = x.fetchone()[0]
 
-    c.commit()'''
+        # Calculate the total cost
+        total_cost = room_rent * num_nights
 
+        # Calculate the balance amount
+        balance = total_cost - advanced
 
-#userlog()
+        print("-------- Bill --------")
+        print("Room Number:", rno)
+        print("Customer ID:", C_id)
+        print("Customer Name:", C_name)
+        print("Date of Occupancy:", DOO)
+        print("Check Out Date:", checkout)
+        print("Room Rent per Night: $", room_rent)
+        print("Number of Nights Stayed:", num_nights)
+        print("Total Room Rent: $", total_cost)
+        print("Advanced Payment: $", advanced)
+        print("Balance Amount: $", balance)
 
-def generate_bill1():
-    c = connect()
-    x = c.cursor()
+        c.commit()
+    else:
+        print("No booking data found.")
 
-    x.execute("SELECT DOO from booking ")
-    doo=x.fetchone()
-    x.execute("SELECT checkout from booking ")
-    cout=x.fetchone()
-    a=cout[4][8:10]
-    print(type(a))
-
-generate_bill1()
+userlog()
