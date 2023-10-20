@@ -250,6 +250,12 @@ def delete_cust():
     C_id = int(input("Enter the Customer ID to delete: "))
     q = "DELETE FROM customer WHERE C_id = {}".format(C_id)
     x.execute(q)
+    x.execute("SELECT rno FROM booking WHERE C_id = {}".format(C_id))
+    booking_record = x.fetchone()
+
+    if booking_record:
+        room_number = booking_record[0]
+        x.execute("UPDATE room_details SET status = 'available' WHERE rno = {}".format(room_number))
     c.commit()
     print("Customer record deleted successfully!")
     cust_login()
