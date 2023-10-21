@@ -54,13 +54,17 @@ x.execute('''CREATE TABLE IF NOT EXISTS booking (
                 checkout DATE,
                 advanced DECIMAL(10, 2)
             )''')
-
-# ADD FOREIGN KEYS
-t = 'ALTER TABLE booking ADD FOREIGN KEY (rno) REFERENCES room_details(rno)'
-x.execute(t)
-
-w = 'ALTER TABLE booking ADD FOREIGN KEY (C_id) REFERENCES customer(C_id)'
-x.execute(w)
+x.execute('''CREATE TABLE IF NOT EXISTS booking (
+                rno INT,
+                C_id INT,
+                rtype VARCHAR(50),
+                C_name VARCHAR(50),
+                DOO DATE,
+                checkout DATE,
+                advanced DECIMAL(10, 2),
+                FOREIGN KEY (rno) REFERENCES room_details(rno),
+                FOREIGN KEY (C_id) REFERENCES customer(C_id) ON DELETE CASCADE
+            )''')
 
 # Committing the changes
 c.commit()
@@ -82,7 +86,8 @@ def employee():
     x.execute(q)
     print("--------Added Successfully--------")
     c.commit()
-
+    login_emp()
+    
 #====================================VIEW EMPLOYEE===============================
 def view_emp():
     c = connect()
@@ -91,6 +96,7 @@ def view_emp():
     r = x.fetchall()
     for i in r:
         print(i)
+    login_emp()
 
 #====================================UPDATE EMPLOYEE=============================
 def update_emp(emp_id):
@@ -127,6 +133,7 @@ def update_emp(emp_id):
     x.execute(query)
     c.commit()
     print("Employee record updated successfully!")
+    login_emp()
 
 #=====================================DELETE EMPLOYEE============================
 def delete_emp():
@@ -248,14 +255,15 @@ def delete_cust():
     c = connect()
     x = c.cursor()
     C_id = int(input("Enter the Customer ID to delete: "))
+    x.execute("DELETE FROM booking WHERE C_id = {}".format(C_id))
     q = "DELETE FROM customer WHERE C_id = {}".format(C_id)
     x.execute(q)
     x.execute("SELECT rno FROM booking WHERE C_id = {}".format(C_id))
     booking_record = x.fetchone()
-
+    print(booking_record)
     if booking_record:
         room_number = booking_record[0]
-        x.execute("UPDATE room_details SET status = 'available' WHERE rno = {}".format(room_number))
+        x.execute("UPDATE room_details SET status = 'Available' WHERE rno = {}".format(room_number))
     c.commit()
     print("Customer record deleted successfully!")
     cust_login()
@@ -310,7 +318,7 @@ def book_room():
     q = int(input("Enter Type of room (1-4): "))
 
     # Define room types and corresponding prices
-    rtypes = ['Ultra Delux', 'Delux', 'Standard', 'Basic']
+    rtypes = ['UltraDelux', 'Delux', 'Standard', 'Basic']
     prices = [100000, 70000, 50000, 20000]
 
     available_rooms = []
@@ -320,10 +328,7 @@ def book_room():
         print(f"Room Price = {prices[q - 1]}")
 
         # Available room numbers for the selected room type
-        x.execute("SELECT rno FROM room_details WHERE rtype = %s AND status = 'available'", (rtype,))
-        available_rooms = x.fetchall()
-        print(available_rooms)
-
+        x.execute("SELECT rno FROM room_details WHERE rtype = %s AND status = 'Available'", (rtype,))
         if available_rooms:
             print("Available Room Numbers:")
             for room in available_rooms[:4]:
@@ -349,7 +354,7 @@ def book_room():
         # Check if the room is available
         room_record = room_exist(rno)
 
-        if room_record and room_record[3] == "available":
+        if room_record and room_record[3] == "Available":
             # Insert booking record
             sql = "INSERT INTO booking (rno, C_id, rtype, C_name, DOO, checkout, advanced) VALUES (%s, %s, %s, %s, %s, %s, %s)"
             values = (rno, C_id, rtype, C_name, DOO, checkout, advanced)
