@@ -1,14 +1,15 @@
 import mysql.connector as m
-
-print('''------------------------------WELCOME-----------------------
---------------------------10 STAR HOTEL--------------------
---------------------__________ HOTEL__________-------------------''')
+print("---------------***********************************-------------")
+print('---------------|             WELCOME             |-------------')
+print('---------------|                To               |-------------')
+print('---------------|            Gold  Rise           |-------------')
+print("---------------***********************************-------------")
 
 # Checking MySQL Connection
 def connect():
     c = m.connect(host='localhost', user='root', password='power', database='hotelm')
     if c.is_connected():
-        print("")
+        print("\n ")
     else:
         print('Not connected')
     return c
@@ -54,19 +55,18 @@ x.execute('''CREATE TABLE IF NOT EXISTS booking (
                 checkout DATE,
                 advanced DECIMAL(10, 2)
             )''')
-x.execute('''CREATE TABLE IF NOT EXISTS booking (
-                rno INT,
-                C_id INT,
-                rtype VARCHAR(50),
-                C_name VARCHAR(50),
-                DOO DATE,
-                checkout DATE,
-                advanced DECIMAL(10, 2),
-                FOREIGN KEY (rno) REFERENCES room_details(rno),
-                FOREIGN KEY (C_id) REFERENCES customer(C_id) ON DELETE CASCADE
-            )''')
+
+# ADD FOREIGN KEYS
+t = 'ALTER TABLE booking ADD FOREIGN KEY (rno) REFERENCES room_details(rno)on delete cascade'
+x.execute(t)
+
+# Modify the foreign key constraints in your database schema to cascade deletes
+w = 'ALTER TABLE booking ADD FOREIGN KEY (C_id) REFERENCES customer(C_id) ON DELETE CASCADE'
+x.execute(w)
+
 
 # Committing the changes
+
 c.commit()
 
 '''-----------------------------Employee----------------------------------'''
@@ -86,8 +86,8 @@ def employee():
     x.execute(q)
     print("--------Added Successfully--------")
     c.commit()
-    login_emp()
-    
+    userlog()
+
 #====================================VIEW EMPLOYEE===============================
 def view_emp():
     c = connect()
@@ -102,12 +102,16 @@ def view_emp():
 def update_emp(emp_id):
     c = connect()
     x = c.cursor()
-    print("-------------UPDATE EMPLOYEE RECORD---------------")
-    print("1. Update Employee Name")
-    print("2. Update Employee Salary")
-    print("3. Update Employee Address")
-    print("4. Update Employee DOJ (Date of Joining)")
-    print("5. Update Employee Work")
+    print("+----------------------------------------------------+")
+    print("|              UPDATE EMPLOYEE RECORD                |")
+    print("+----------------------------------------------------+")
+    print("|1.  Update Employee Name                            |")
+    print("|2.  Update Employee Salary                          |")
+    print("|3.  Update Employee Address                         |")
+    print("|4.  Update Employee DOJ (Date of Joining)           |")
+    print("|5.  Update Employee Work                            |")
+    print("|0.  Go to previous menu                             |")
+    print("+----------------------------------------------------+")
 
     choice = int(input("Enter your choice (1-5): "))
 
@@ -126,14 +130,15 @@ def update_emp(emp_id):
     elif choice == 5:
         new_work = input("Enter new Employee Work: ")
         query = "UPDATE employee SET E_work = '{}' WHERE E_id = {}".format(new_work, emp_id)
+    elif choice == 0:
+        login_emp()
     else:
         print("Invalid choice")
-        return
+        userlog()
 
     x.execute(query)
     c.commit()
     print("Employee record updated successfully!")
-    login_emp()
 
 #=====================================DELETE EMPLOYEE============================
 def delete_emp():
@@ -159,10 +164,13 @@ def login_emp():
 
     if result:
         print("Login successful!\n")
-        print("1. Update Record")
-        print("2. Add Employee")
-        print("3. Delete Employee Account")
-        print("4. Show Employees")
+        print("+---------------------------------+")
+        print("| 1. Update Record                |")
+        print("| 2. Add Employee                 |")
+        print("| 3. Delete Employee Account      |")
+        print("| 4. Show Employees               |")
+        print("| 0. main menu                    |")
+        print("+---------------------------------+")
         c = int(input("Enter Choice: "))
 
         if c == 1:
@@ -173,11 +181,13 @@ def login_emp():
             delete_emp()
         elif c == 4:
             view_emp()
+        elif c == 0:
+            manager()
         else:
             login_emp()
     else:
         print("Login failed. Invalid credentials.")
-        login_emp()
+        userlog()
 
 """------------------------------Customer--------------------------------------"""
 
@@ -225,10 +235,13 @@ def view_cust():
 def update_cust(C_id):
     c = connect()
     x = c.cursor()
-    print("-------------UPDATE Customer RECORD---------------")
-    print("1. Update Customer C_id")
-    print("2. Update Customer Name")
-    print("3. Update Customer Email")
+    print("+-------------------------------+")
+    print("|    UPDATE Customer RECORD     |")
+    print("+--+----------------------------+")
+    print("|1.| Update Customer C_id       |")
+    print("|2.| Update Customer Name       |")
+    print("|3.| Update Customer Email      |")
+    print("+--+----------------------------+")
 
     choice = int(input("Enter your choice (1-3): "))
 
@@ -255,18 +268,23 @@ def delete_cust():
     c = connect()
     x = c.cursor()
     C_id = int(input("Enter the Customer ID to delete: "))
+    
+    # Delete associated booking records first
     x.execute("DELETE FROM booking WHERE C_id = {}".format(C_id))
-    q = "DELETE FROM customer WHERE C_id = {}".format(C_id)
-    x.execute(q)
-    x.execute("SELECT rno FROM booking WHERE C_id = {}".format(C_id))
-    booking_record = x.fetchone()
-    print(booking_record)
-    if booking_record:
-        room_number = booking_record[0]
-        x.execute("UPDATE room_details SET status = 'Available' WHERE rno = {}".format(room_number))
+    
+    # Then delete the customer record
+    x.execute("DELETE FROM customer WHERE C_id = {}".format(C_id))
+    
     c.commit()
-    print("Customer record deleted successfully!")
-    cust_login()
+    print("Customer record and associated bookings deleted successfully!")
+
+    # Ask the user if they want to perform additional actions
+    choice = input("Do you want to perform another action? (y/n): ").lower()
+    if choice == 'y':
+        cust_login()
+    else:
+        userlog()
+
 
 '''-----------------------------------Room------------------------------------'''
 
@@ -278,30 +296,6 @@ def room_exist(rno):
     return record
     c.commit()
 
-def roomrent():
-    c = connect()
-    x = c.cursor()
-    x.execute("SELECT * FROM room_details")
-    result = x.fetchall()
-    for i in result:
-        print(i)
-    l = [1, 2, 3, 4]
-    choice = int(input("Enter your choice: "))
-    s = 0
-
-    if choice in l:
-        n = int(input("Enter number of nights: "))
-        if choice == 1:
-            s = 100000 * n
-        elif choice == 2:
-            s = 70000 * n
-        elif choice == 3:
-            s = 50000 * n
-        elif choice == 4:
-            s = 10000 * n
-        print("Your chosen room rent is:", s)
-    else:
-        print("Invalid choice")
 
 def book_room():
     c = connect()
@@ -310,15 +304,19 @@ def book_room():
     C_id = int(input("Enter CUSTOMER ID: "))
     C_name = input("Enter CUSTOMER NAME:")
     print("We have the rooms ")
-    print("0. Main Menu")
-    print("1. Ultra Delux")
-    print("2. Delux")
-    print("3. Standard")
-    print("4. Basic")
+    print("0. Main Menu\n")
+    print("+---------------------------+")
+    print("|   Rooms Type   |  Price($)|")
+    print("+---------------------------+")
+    print("|1. Ultra Delux  |  $100000 |")
+    print("|2. Delux        |  $70000  |")
+    print("|3. Standard     |  $50000  |")
+    print("|4. Basic        |  $20000  |")
+    print("+---------------------------+")
     q = int(input("Enter Type of room (1-4): "))
 
     # Define room types and corresponding prices
-    rtypes = ['UltraDelux', 'Delux', 'Standard', 'Basic']
+    rtypes = ['Ultra Delux', 'Delux', 'Standard', 'Basic']
     prices = [100000, 70000, 50000, 20000]
 
     available_rooms = []
@@ -328,13 +326,17 @@ def book_room():
         print(f"Room Price = {prices[q - 1]}")
 
         # Available room numbers for the selected room type
-        x.execute("SELECT rno FROM room_details WHERE rtype = %s AND status = 'Available'", (rtype,))
+        x.execute("SELECT rno FROM room_details WHERE rtype = %s AND status = 'available'", (rtype,))
+        available_rooms = x.fetchall()
+        
+
         if available_rooms:
-            print("Available Room Numbers:")
+            print(f"Available Room Numbers for {rtype}:")
             for room in available_rooms[:4]:
                 print(room[0])
         else:
             print(f"No available {rtype} rooms.")
+            print(" Please Login Again ( Time-Out )")
             return
     elif q == 0:
         userlog()
@@ -348,13 +350,13 @@ def book_room():
     # Check if the selected room is available
     if (rno,) in available_rooms:
         DOO = input("Enter DATE OF OCCUPANCY (YYYY-MM-DD): ")
-        checkout = input("Enter CHECK OUT DATE (YYYY-MM-DD): ")
+        checkout = input("Enter CHECK OUT DATE  (YYYY-MM-DD): ")
         advanced = float(input("Enter advanced amount: "))
 
         # Check if the room is available
         room_record = room_exist(rno)
 
-        if room_record and room_record[3] == "Available":
+        if room_record and room_record[3] == "available":
             # Insert booking record
             sql = "INSERT INTO booking (rno, C_id, rtype, C_name, DOO, checkout, advanced) VALUES (%s, %s, %s, %s, %s, %s, %s)"
             values = (rno, C_id, rtype, C_name, DOO, checkout, advanced)
@@ -391,26 +393,50 @@ def list_available_rooms():
         print(room)
     c.commit()
 
-def check_in():
+def generate_bill(C_id):
     c = connect()
     x = c.cursor()
-    print("-----<CHECKING IN>-----")
-    C_id = int(input("Enter CUSTOMER ID: "))
-    C_name = input("Enter CUSTOMER NAME: ")
-    
-    # List available rooms for selection
-    list_available_rooms()
 
-    rno = int(input("Enter room ID to check in: "))
-    rtype = input("Enter TYPE of ROOM: ")
-    DOO = input("Enter DATE OF OCCUPANCY (YYYY-MM-DD): ")
-    checkout = input("Enter CHECK OUT DATE (YYYY-MM-DD): ")
-    
+    # Fetch booking data
+    x.execute("SELECT DOO, checkout, C_id, C_name, rno, advanced FROM booking where c_id={}".format(C_id))
+    booking_data = x.fetchall()
 
-    x.execute("INSERT INTO booking VALUES({}, {}, '{}', '{}', {}, {})".format(rno, C_id, rtype, C_name, DOO, checkout))
-    x.execute("UPDATE room_details SET status = 'Occupied' WHERE rid = {}".format(rno))
-    c.commit()
-    print("Check-in successful!")
+    if booking_data:
+        for row in booking_data:
+            DOO, checkout, C_id, C_name, rno, advanced = row
+            num_nights = int(checkout[-2:]) - int(DOO[-2:])
+
+            # Fetch room rent for the specified room number
+            x.execute("SELECT rent FROM room_details WHERE rno = {}".format(rno))
+            room_rent_data = x.fetchone()
+            if room_rent_data:
+                room_rent = room_rent_data[0]
+
+                # Calculate the total cost
+                total_cost = room_rent * num_nights
+
+                # Calculate the balance amount
+                balance = total_cost - float(advanced)
+
+                print("+---------|       Bill        |-----------+")
+                print("| Room Number            :", rno ,'       |')
+                print("| Customer ID            :", C_id,'       |')
+                print("| Customer Name          :", C_name,'     |')
+                print("| Date of Occupancy      :", DOO,'        |')
+                print("| Check Out Date         :", checkout,'   |')
+                print("| Room Rent per Night    : $", room_rent,'|')
+                print("| Number of Nights Stayed:", num_nights,' |')
+                print("| Total Room Rent        : $",total_cost,'|')
+                print("| Advanced Payment       : $", advanced,' |')
+                print("| Balance Amount         : $", balance,'  |')
+                print("+-----------------------------------------+")
+                print('                   :)                     ')
+
+                c.commit()
+            else:
+                print("Error fetching room rent data.")
+    else:
+        print("No booking data found.")
 
 def add_room_details():
     c = connect()
@@ -474,11 +500,13 @@ def cust_login():
 
     if result:
         print("Login successful!\n")
-        print("1. Book Rooms  ")
-        print("2. Update Account")
-        print("3. Delete Account")
-        print("4. to get bill")
-        print("5. Main Menu")
+        print("+---------------------------------+")
+        print("| 1. Book Rooms                   |")
+        print("| 2. Update Account               |")
+        print("| 3. Delete Account               |")
+        print("| 4. Get bill                     |")
+        print("| 5. Main Menu                    |")
+        print("+---------------------------------+")
         c = int(input("Enter Choice :"))
         if c == 1:
             book_room()
@@ -487,7 +515,7 @@ def cust_login():
         elif c == 3:
             delete_cust()
         elif c == 4:
-            generate_bill()
+            generate_bill(entered_id)
         elif c == 5:
             userlog()
         else:
@@ -508,6 +536,7 @@ def cust():
     else:
         cust()
 
+
 def manager():
     print("1. Employee Login")
     print("2. Main Menu")
@@ -522,55 +551,19 @@ def manager():
 def userlog():
     c = connect()
     print("=========| Welcome, TO Hotel |==========")
-    print("1.  Customer ")
-    print("2.  Employee ")
-        
+    print("+-----------------=-+")
+    print("| 1.  Customer      |")
+    print("| 2.  Employee      |")
+    print("+-----------------=-+")
+    
     login = int(input("Enter Option :"))
     if login == 1:
         cust()
-    if login == 2:
+    elif login == 2:
         manager()
-
-def generate_bill():
-    c = connect()
-    x = c.cursor()
-
-    # Fetch booking data
-    x.execute("SELECT DOO, checkout, C_id, C_name, rno, advanced FROM booking")
-    booking_data = x.fetchone()
-
-    if booking_data:
-        DOO, checkout, C_id, C_name, rno, advanced = booking_data
-        num_nights = int(checkout[-2:]) - int(DOO[-2:])
-
-        # Fetch room rent for the specified room number
-        x.execute("SELECT rent FROM room_details WHERE rno = {}".format(rno))
-        room_rent_data = x.fetchone()
-        if room_rent_data:
-            room_rent = room_rent_data[0]
-
-            # Calculate the total cost
-            total_cost = room_rent * num_nights
-
-            # Calculate the balance amount
-            balance = total_cost - float(advanced)
-
-            print("-------- Bill --------")
-            print("Room Number:", rno)
-            print("Customer ID:", C_id)
-            print("Customer Name:", C_name)
-            print("Date of Occupancy:", DOO)
-            print("Check Out Date:", checkout)
-            print("Room Rent per Night: $", room_rent)
-            print("Number of Nights Stayed:", num_nights)
-            print("Total Room Rent: $", total_cost)
-            print("Advanced Payment: $", advanced)
-            print("Balance Amount: $", balance)
-
-            c.commit()
-        else:
-            print("Error fetching room rent data.")
-    else:
-        print("No booking data found.")
-
+    elif login == None:
+        print("something went wrong try again")
+        userlog()
+         
 userlog()
+
