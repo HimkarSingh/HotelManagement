@@ -372,26 +372,9 @@ def book_room():
     else:
         print("Invalid room number selected.")
 
-#====================================VIEW BOOKINGS==============================
-def view_bookings():
-    c = connect()
-    x = c.cursor()
-    print("-----<VIEW BOOKINGS>-----")
-    x.execute("SELECT * FROM booking")
-    bookings = x.fetchall()
-    for booking in bookings:
-        print(booking)
-    c.commit()
 
-def list_available_rooms():
-    c = connect()
-    x = c.cursor()
-    print("-----<AVAILABLE ROOMS>-----")
-    x.execute("SELECT * FROM room_details WHERE status = 'Available'")
-    available_rooms = x.fetchall()
-    for room in available_rooms:
-        print(room)
-    c.commit()
+# =============================== TO GENERATE BILL ==============================
+
 
 def generate_bill(C_id):
     c = connect()
@@ -417,19 +400,22 @@ def generate_bill(C_id):
 
                 # Calculate the balance amount
                 balance = total_cost - float(advanced)
-
-                print("+---------|       Bill        |-----------+")
-                print("| Room Number            :", rno ,'       |')
-                print("| Customer ID            :", C_id,'       |')
-                print("| Customer Name          :", C_name,'     |')
-                print("| Date of Occupancy      :", DOO,'        |')
-                print("| Check Out Date         :", checkout,'   |')
-                print("| Room Rent per Night    : $", room_rent,'|')
-                print("| Number of Nights Stayed:", num_nights,' |')
-                print("| Total Room Rent        : $",total_cost,'|')
-                print("| Advanced Payment       : $", advanced,' |')
-                print("| Balance Amount         : $", balance,'  |')
-                print("+-----------------------------------------+")
+                print("           ___________________")
+                print("")
+                print("+---------|     *  Bill  *    |------------+")
+                print("           ___________________")
+                print('')
+                print(f"| Room Number            :   {rno}            |")
+                print(f"| Customer ID            :   {C_id}          |")
+                print(f"| Customer Name          :   {C_name}         |")
+                print(f"| Date of Occupancy      :   {DOO}    |")
+                print(f"| Check Out Date         :   {checkout}    |")
+                print(f"| Room Rent per Night    : $ {room_rent}         |")
+                print(f"| Number of Nights Stayed:   {num_nights}             |")
+                print(f"| Total Room Rent        : $ {total_cost}             |")
+                print(f"| Advanced Payment       : $ {advanced}       |")
+                print(f"| Balance Amount         : $ {balance}      |")
+                print("+------------------------------------------+")
                 print('                   :)                     ')
 
                 c.commit()
@@ -538,8 +524,10 @@ def cust():
 
 
 def manager():
-    print("1. Employee Login")
-    print("2. Main Menu")
+    print("+----+-------------------+")
+    print("| 1. |  Employee Login   |")
+    print("| 2. |  Main Menu        |")
+    print("+----+-------------------+")
     c = int(input("Enter Your Choice : "))
     if c == 1:
         login_emp()
@@ -551,10 +539,10 @@ def manager():
 def userlog():
     c = connect()
     print("=========| Welcome, TO Hotel |==========")
-    print("+-----------------=-+")
-    print("| 1.  Customer      |")
-    print("| 2.  Employee      |")
-    print("+-----------------=-+")
+    print("+----+----------------+")
+    print("| 1. |  Customer      |")
+    print("| 2. |  Employee      |")
+    print("+----+----------------+")
     
     login = int(input("Enter Option :"))
     if login == 1:
@@ -564,6 +552,8 @@ def userlog():
     elif login == None:
         print("something went wrong try again")
         userlog()
+
+
+
          
 userlog()
-
