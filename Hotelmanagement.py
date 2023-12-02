@@ -375,7 +375,7 @@ def book_room():
 
 # =============================== TO GENERATE BILL ==============================
 
-
+from datetime import datetime
 def generate_bill(C_id):
     c = connect()
     x = c.cursor()
@@ -387,7 +387,13 @@ def generate_bill(C_id):
     if booking_data:
         for row in booking_data:
             DOO, checkout, C_id, C_name, rno, advanced = row
-            num_nights = int(checkout[-2:]) - int(DOO[-2:])
+            
+            # Convert string dates to datetime objects
+            DOO_date = datetime.strptime(DOO, "%Y-%m-%d")
+            checkout_date = datetime.strptime(checkout, "%Y-%m-%d")
+
+            # Calculate the number of days stayed
+            num_days = (checkout_date - DOO_date).days
 
             # Fetch room rent for the specified room number
             x.execute("SELECT rent FROM room_details WHERE rno = {}".format(rno))
@@ -396,7 +402,7 @@ def generate_bill(C_id):
                 room_rent = room_rent_data[0]
 
                 # Calculate the total cost
-                total_cost = room_rent * num_nights
+                total_cost = room_rent * num_days
 
                 # Calculate the balance amount
                 balance = total_cost - float(advanced)
@@ -411,7 +417,7 @@ def generate_bill(C_id):
                 print(f"| Date of Occupancy      :   {DOO}    |")
                 print(f"| Check Out Date         :   {checkout}    |")
                 print(f"| Room Rent per Night    : $ {room_rent}         |")
-                print(f"| Number of Nights Stayed:   {num_nights}             |")
+                print(f"| Number of Nights Stayed:   {num_days}             |")
                 print(f"| Total Room Rent        : $ {total_cost}             |")
                 print(f"| Advanced Payment       : $ {advanced}       |")
                 print(f"| Balance Amount         : $ {balance}      |")
