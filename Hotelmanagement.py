@@ -326,7 +326,7 @@ def book_room():
         print(f"Room Price = {prices[q - 1]}")
 
         # Available room numbers for the selected room type
-        x.execute("SELECT rno FROM room_details WHERE rtype = %s AND status = 'available'", (rtype,))
+        x.execute("SELECT rno FROM room_details WHERE rtype = %s AND status = 'Available'", (rtype,))
         available_rooms = x.fetchall()
         
 
@@ -356,7 +356,7 @@ def book_room():
         # Check if the room is available
         room_record = room_exist(rno)
 
-        if room_record and room_record[3] == "available":
+        if room_record and room_record[3] == "Available":
             # Insert booking record
             sql = "INSERT INTO booking (rno, C_id, rtype, C_name, DOO, checkout, advanced) VALUES (%s, %s, %s, %s, %s, %s, %s)"
             values = (rno, C_id, rtype, C_name, DOO, checkout, advanced)
